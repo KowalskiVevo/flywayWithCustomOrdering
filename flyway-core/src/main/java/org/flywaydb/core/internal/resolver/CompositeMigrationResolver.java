@@ -28,18 +28,11 @@ import org.flywaydb.core.internal.parser.ParsingContext;
 import org.flywaydb.core.internal.resolver.java.FixedJavaMigrationResolver;
 import org.flywaydb.core.internal.resolver.java.ScanningJavaMigrationResolver;
 import org.flywaydb.core.internal.resolver.sql.SqlMigrationResolver;
-import org.flywaydb.core.internal.resolver.script.ScriptMigrationResolver;
 import org.flywaydb.core.internal.sqlscript.SqlScriptExecutorFactory;
 import org.flywaydb.core.internal.sqlscript.SqlScriptFactory;
 
 
-
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.stream.Collectors;
+import java.util.*;
 
 public class CompositeMigrationResolver implements MigrationResolver {
     private final Collection<MigrationResolver> migrationResolvers = new ArrayList<>();
@@ -48,6 +41,7 @@ public class CompositeMigrationResolver implements MigrationResolver {
     private final SqlScriptExecutorFactory sqlScriptExecutorFactory;
     private final StatementInterceptor statementInterceptor;
     private List<ResolvedMigration> availableMigrations;
+    private final Configuration configuration;
 
     public CompositeMigrationResolver(ResourceProvider resourceProvider,
                                       ClassProvider<JavaMigration> classProvider,
@@ -61,6 +55,7 @@ public class CompositeMigrationResolver implements MigrationResolver {
         this.sqlScriptFactory = sqlScriptFactory;
         this.sqlScriptExecutorFactory = sqlScriptExecutorFactory;
         this.statementInterceptor = statementInterceptor;
+        this.configuration = configuration;
 
         if (!configuration.isSkipDefaultResolvers()) {
             migrationResolvers.add(new SqlMigrationResolver(resourceProvider, sqlScriptExecutorFactory, sqlScriptFactory, configuration, parsingContext));
@@ -118,7 +113,10 @@ public class CompositeMigrationResolver implements MigrationResolver {
 
     private List<ResolvedMigration> doFindAvailableMigrations(Context context) throws FlywayException {
         List<ResolvedMigration> migrations = new ArrayList<>(collectMigrations(migrationResolvers, context));
-        migrations.sort(new ResolvedMigrationComparator());
+
+        if (!configuration.isSkipDefaultResolvers()) {
+            migrations.sort(new ResolvedMigrationComparator());
+        }
 
         checkForIncompatibilities(migrations);
 
@@ -126,8 +124,10 @@ public class CompositeMigrationResolver implements MigrationResolver {
     }
 
     Collection<ResolvedMigration> collectMigrations(Collection<MigrationResolver> migrationResolvers, Context context) {
-        return migrationResolvers.stream()
-                .flatMap(mr -> mr.resolveMigrations(context).stream())
-                .collect(Collectors.toSet());
+        Set<ResolvedMigration> migrations = new LinkedHashSet<>();
+        for (MigrationResolver migrationResolver : migrationResolvers) {
+            migrations.addAll(migrationResolver.resolveMigrations(context));
+        }
+        return migrations;
     }
 }

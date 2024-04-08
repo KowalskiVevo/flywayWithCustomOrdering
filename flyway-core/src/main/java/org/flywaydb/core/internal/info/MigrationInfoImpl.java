@@ -413,7 +413,7 @@ public class MigrationInfoImpl implements MigrationInfo {
         }
 
         // Two repeatable migrations: sort by description
-        return getDescription().compareTo(o.getDescription());
+        return 0;
     }
 
     @Override

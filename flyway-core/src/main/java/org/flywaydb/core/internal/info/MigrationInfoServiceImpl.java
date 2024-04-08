@@ -89,7 +89,7 @@ public class MigrationInfoServiceImpl implements MigrationInfoService, Operation
         context.cherryPick = cherryPick;
 
         Map<Pair<MigrationVersion, MigrationType>, ResolvedMigration> resolvedVersioned = getResolvedVersionedMigrations(resolvedMigrations, context);
-        Map<String, ResolvedMigration> resolvedRepeatable = new TreeMap<>(getResolvedRepeatableMigrations(resolvedMigrations));
+        Map<String, ResolvedMigration> resolvedRepeatable = new LinkedHashMap<>(getResolvedRepeatableMigrations(resolvedMigrations));
 
 
 
@@ -165,7 +165,7 @@ public class MigrationInfoServiceImpl implements MigrationInfoService, Operation
     }
 
     private Map<String, ResolvedMigration> getResolvedRepeatableMigrations(Collection<ResolvedMigration> resolvedMigrations) {
-        Map<String, ResolvedMigration> resolvedRepeatableMigrations = new TreeMap<>();
+        Map<String, ResolvedMigration> resolvedRepeatableMigrations = new LinkedHashMap<>();
         for (ResolvedMigration resolvedMigration : resolvedMigrations) {
             if (resolvedMigration.getVersion() == null) {
                 resolvedRepeatableMigrations.put(resolvedMigration.getDescription(), resolvedMigration);
@@ -278,7 +278,7 @@ public class MigrationInfoServiceImpl implements MigrationInfoService, Operation
 
     private Set<ResolvedMigration> getPendingResolvedRepeatableMigrations(List<Pair<AppliedMigration, AppliedMigrationAttributes>> appliedRepeatableMigrations,
                                                                           Map<String, ResolvedMigration> resolvedRepeatableMigrations, MigrationInfoContext context) {
-        Set<ResolvedMigration> pendingResolvedVRepeatableMigrations = new HashSet<>(resolvedRepeatableMigrations.values());
+        Set<ResolvedMigration> pendingResolvedVRepeatableMigrations = new LinkedHashSet<>(resolvedRepeatableMigrations.values());
         for (Pair<AppliedMigration, AppliedMigrationAttributes> av : appliedRepeatableMigrations) {
             AppliedMigration appliedRepeatableMigration = av.getLeft();
             String desc = appliedRepeatableMigration.getDescription();
